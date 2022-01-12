@@ -1,0 +1,25 @@
+name: build
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build
+        run: ./gradlew build
+
+      - name: Archive artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact
+          path: build/libs

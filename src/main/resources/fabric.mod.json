@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "yarpc",
+  "version": "${version}",
+
+  "name": "Yet another rich presence mod",
+  "description": "DiscordRPC mod for fabric",
+  "authors": [
+    "Nep Nep"
+  ],
+  "contact": {
+    "sources": "https://github.com/NepNep21/YARPC-fabric"
+  },
+
+  "license": "GPL-3.0-or-later",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "club.bottomservices.discordrpc.fabricmod.YARPC"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.18.x",
+    "java": ">=17",
+    "cloth-config": ">=6.0.42"
+  }
+}

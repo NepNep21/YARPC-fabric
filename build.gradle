@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'fabric-loom' version '0.13-SNAPSHOT'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -27,14 +27,14 @@ dependencies {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 
-	include(implementation("com.github.NepNep21:DiscordRPC4j16:fdf1a97b7e"))
+	include(implementation("com.github.NepNep21:DiscordRPC4j16:254cf165ca6ed9bca78af073a5dd8ee745781876"))
 }
 
 processResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand "version": project.version.split('-')[0]
 	}
 }
 

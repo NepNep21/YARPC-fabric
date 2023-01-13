@@ -30,10 +30,6 @@ import java.util.List;
 
 @Config(name = "yarpc")
 public class YARPCConfig implements ConfigData {
-    // Must be static to prevent from being detected
-    private static final List<String> VALID_OPTIONS = List.of("DIMENSION", "USERNAME", "HEALTH", "HUNGER", "SERVER", "HELD_ITEM");
-    private static final String[] DEFAULT = new String[]{"USERNAME", "HEALTH", "HUNGER", "DIMENSION"};
-
     @Comment("Whether this mod is enabled")
     boolean isEnabled = true;
     @Comment("Format for the state line, use %s as a placeholder, up to 2 placeholders are allowed")
@@ -43,7 +39,7 @@ public class YARPCConfig implements ConfigData {
     @Comment("Application id from discord for using custom assets, see https://discord.com/developers/applications/")
     String appId = "928401525842259979";
     @Comment("List of format arguments (DIMENSION, USERNAME, HEALTH, HUNGER, SERVER, HELD_ITEM)")
-    String[] formatArgs = DEFAULT;
+    List<String> formatArgs = List.of(NotSerialized.DEFAULT);
     @Comment("Text for the large image")
     String largeText = "Playing minecraft";
     @Comment("Text for the small image")
@@ -56,10 +52,15 @@ public class YARPCConfig implements ConfigData {
     @Override
     public void validatePostLoad() {
         for (var arg : formatArgs) {
-            if (!VALID_OPTIONS.contains(arg)) {
-                formatArgs = DEFAULT;
+            if (!NotSerialized.VALID_OPTIONS.contains(arg)) {
+                formatArgs = List.of(NotSerialized.DEFAULT);
                 break;
             }
         }
+    }
+    
+    private static class NotSerialized {
+        private static final List<String> VALID_OPTIONS = List.of("DIMENSION", "USERNAME", "HEALTH", "HUNGER", "SERVER", "HELD_ITEM");
+        private static final String[] DEFAULT = new String[]{"USERNAME", "HEALTH", "HUNGER", "DIMENSION"};
     }
 }

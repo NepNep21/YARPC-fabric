@@ -1,0 +1,11 @@
+{
+  "text.autoconfig.yarpc.option.isEnabled": "Enabled",
+  "text.autoconfig.yarpc.option.stateFormat": "State format",
+  "text.autoconfig.yarpc.option.detailsFormat": "Details format",
+  "text.autoconfig.yarpc.option.appId": "App id",
+  "text.autoconfig.yarpc.option.formatArgs": "Format arguments",
+  "text.autoconfig.yarpc.option.largeText": "Large text",
+  "text.autoconfig.yarpc.option.smallText": "Small text",
+  "text.autoconfig.yarpc.option.largeImage": "Large image",
+  "text.autoconfig.yarpc.option.smallImage": "Small image"
+}

@@ -18,7 +18,8 @@
   "entrypoints": {
     "client": [
       "club.bottomservices.discordrpc.fabricmod.YARPC"
-    ]
+    ],
+    "modmenu": ["club.bottomservices.discordrpc.fabricmod.ModMenuImpl"]
   },
 
   "depends": {

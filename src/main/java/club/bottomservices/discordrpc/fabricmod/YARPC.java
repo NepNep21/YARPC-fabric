@@ -26,7 +26,7 @@ import club.bottomservices.discordrpc.lib.*;
 import club.bottomservices.discordrpc.lib.exceptions.NoDiscordException;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
-import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.network.ServerInfo;
@@ -44,7 +44,7 @@ public class YARPC implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ConfigHolder<YARPCConfig> holder = AutoConfig.register(YARPCConfig.class, JanksonConfigSerializer::new);
+        ConfigHolder<YARPCConfig> holder = AutoConfig.register(YARPCConfig.class, Toml4jConfigSerializer::new);
         config = holder.getConfig();
         if (!config.isEnabled) {
             return;
@@ -66,7 +66,7 @@ public class YARPC implements ClientModInitializer {
                             if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                                 continue;
                             }
-                            if (((Path) event.context()).endsWith("yarpc.json5")) {
+                            if (((Path) event.context()).endsWith("yarpc.toml")) {
                                 logger.info("Reloading config");
                                 if (holder.load()) {
                                     config = holder.getConfig();

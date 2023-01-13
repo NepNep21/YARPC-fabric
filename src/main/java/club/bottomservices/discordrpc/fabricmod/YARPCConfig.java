@@ -26,8 +26,10 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 
+import java.util.ArrayList;
 import java.util.List;
 
+// Comments are for the GUI
 @Config(name = "yarpc")
 public class YARPCConfig implements ConfigData {
     @Comment("Whether this mod is enabled")
@@ -39,7 +41,7 @@ public class YARPCConfig implements ConfigData {
     @Comment("Application id from discord for using custom assets, see https://discord.com/developers/applications/")
     String appId = "928401525842259979";
     @Comment("List of format arguments (DIMENSION, USERNAME, HEALTH, HUNGER, SERVER, HELD_ITEM)")
-    List<String> formatArgs = List.of(NotSerialized.DEFAULT);
+    List<String> formatArgs = new ArrayList<>(NotSerialized.DEFAULT);
     @Comment("Text for the large image")
     String largeText = "Playing minecraft";
     @Comment("Text for the small image")
@@ -51,9 +53,10 @@ public class YARPCConfig implements ConfigData {
 
     @Override
     public void validatePostLoad() {
+        formatArgs = formatArgs.subList(0, 4); // Wonky workaround
         for (var arg : formatArgs) {
             if (!NotSerialized.VALID_OPTIONS.contains(arg)) {
-                formatArgs = List.of(NotSerialized.DEFAULT);
+                formatArgs = new ArrayList<>(NotSerialized.DEFAULT);
                 break;
             }
         }
@@ -61,6 +64,6 @@ public class YARPCConfig implements ConfigData {
     
     private static class NotSerialized {
         private static final List<String> VALID_OPTIONS = List.of("DIMENSION", "USERNAME", "HEALTH", "HUNGER", "SERVER", "HELD_ITEM");
-        private static final String[] DEFAULT = new String[]{"USERNAME", "HEALTH", "HUNGER", "DIMENSION"};
+        private static final List<String> DEFAULT = List.of("USERNAME", "HEALTH", "HUNGER", "DIMENSION");
     }
 }

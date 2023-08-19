@@ -28,7 +28,7 @@ dependencies {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 	
-	modImplementation "com.terraformersmc:modmenu:4.1.2"
+	modImplementation "com.terraformersmc:modmenu:7.1.0"
 
 	include(implementation("com.github.NepNep21:DiscordRPC4j16:v1.2.1"))
 }

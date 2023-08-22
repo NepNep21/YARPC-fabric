@@ -31,6 +31,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.network.ServerInfo;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,16 +42,48 @@ public class YARPC implements ClientModInitializer {
     private byte tickTimer = 0;
     private volatile YARPCConfig config;
     private Thread watchThread = null;
+    private final RichPresence.Builder builder = new RichPresence.Builder();
 
     @Override
     public void onInitializeClient() {
         ConfigHolder<YARPCConfig> holder = AutoConfig.register(YARPCConfig.class, Toml4jConfigSerializer::new);
-        config = holder.getConfig();
-        if (!config.isEnabled) {
-            return;
-        }
-
+        this.config = holder.getConfig();
+        
         var logger = LogManager.getLogger();
+
+        var discordClient = new DiscordRPCClient(new EventListener() {
+            // Log4j adds a shutdown hook that stops the logging system, since the discord connection is also closed in a shutdown
+            // hook and the run order isn't guaranteed, logging the connection closing is pointless
+            @Override
+            public void onReady(@NotNull DiscordRPCClient client, @NotNull User user) {
+                logger.info("DiscordRPC Ready");
+                long ts = System.currentTimeMillis() / 1000;
+                
+                YARPC.this.builder.setTimestamps(ts, null);
+                client.sendPresence(
+                        new RichPresence.Builder().setTimestamps(ts, null).build()
+                );
+            }
+
+            @Override
+            public void onError(@NotNull DiscordRPCClient client, @Nullable IOException exception, @Nullable ErrorEvent event) {
+                if (exception != null) {
+                    logger.error("DiscordRPC error with IOException", exception);
+                } else if (event != null) {
+                    logger.error("DiscordRPC error with ErrorEvent code {} and message {}", event.code, event.message);
+                }
+            }
+        }, config.appId);
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (discordClient.isConnected) {
+                discordClient.disconnect();
+            }
+            if (watchThread != null) {
+                watchThread.interrupt();
+            }
+        }, "YARPC Shutdown Hook"));
+        
         try {
             var watchService = FileSystems.getDefault().newWatchService();
             Paths.get("config").register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
@@ -69,7 +102,7 @@ public class YARPC implements ClientModInitializer {
                             if (((Path) event.context()).endsWith("yarpc.toml")) {
                                 logger.info("Reloading config");
                                 if (holder.load()) {
-                                    config = holder.getConfig();
+                                    init(holder, logger, discordClient);
                                 }
                             }
                         }
@@ -85,60 +118,7 @@ public class YARPC implements ClientModInitializer {
             logger.error("Failed to create filesystem watcher for configs", e);
         }
 
-        var builder = new RichPresence.Builder().setTimestamps(System.currentTimeMillis() / 1000, null);
-        var discordClient = new DiscordRPCClient(new EventListener() {
-            // Log4j adds a shutdown hook that stops the logging system, since the discord connection is also closed in a shutdown
-            // hook and the run order isn't guaranteed, logging the connection closing is pointless
-            @Override
-            public void onReady(@NotNull DiscordRPCClient client, @NotNull User user) {
-                logger.info("DiscordRPC Ready");
-                client.sendPresence(builder.build());
-            }
-
-            @Override
-            public void onError(@NotNull DiscordRPCClient client, @Nullable IOException exception, @Nullable ErrorEvent event) {
-                if (exception != null) {
-                    logger.error("DiscordRPC error with IOException", exception);
-                } else if (event != null) {
-                    logger.error("DiscordRPC error with ErrorEvent code {} and message {}", event.code, event.message);
-                }
-            }
-        }, config.appId);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (discordClient.isConnected) {
-                discordClient.disconnect();
-            }
-            if (watchThread != null) {
-                watchThread.interrupt();
-            }
-        }, "YARPC Shutdown Hook"));
-
-        try {
-            discordClient.connect();
-        } catch (NoDiscordException e) {
-            logger.error("Failed initial discord connection", e);
-        }
-
-        new Thread(() -> {
-            while (true) {
-                if (discordClient.isConnected) {
-                    discordClient.sendPresence(builder.build());
-                } else {
-                    try {
-                        discordClient.connect();
-                    } catch (NoDiscordException e) {
-                        // Don't want to spam logs
-                    }
-                }
-
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }, "YARPC Update Thread").start();
+        init(holder, logger, discordClient);
 
         ClientTickEvents.END_CLIENT_TICK.register((client) -> {
             // Only run every 4 seconds
@@ -198,5 +178,42 @@ public class YARPC implements ClientModInitializer {
                 builder.setText(split[0], split[1]);
             }
         });
+    }
+    
+    private void init(ConfigHolder<YARPCConfig> holder, Logger logger, DiscordRPCClient discordClient) {
+        this.config = holder.getConfig();
+        
+        if (this.config.isEnabled) {
+            if (!discordClient.isConnected) {
+                try {
+                    discordClient.connect();
+
+                    new Thread(() -> {
+                        while (true) {
+                            if (discordClient.isConnected) {
+                                discordClient.sendPresence(this.builder.build());
+                            } else if (this.config.isEnabled) {
+                                try {
+                                    init(holder, logger, discordClient);
+                                    break;
+                                } catch (NoDiscordException e) {
+                                    // Don't want to spam logs
+                                }
+                            }
+
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }, "YARPC Update Thread").start();
+                } catch (NoDiscordException e) {
+                    logger.error("Failed initial discord connection", e);
+                }
+            }
+        } else if (discordClient.isConnected) {
+            discordClient.disconnect();
+        }
     }
 }

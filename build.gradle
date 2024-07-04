@@ -30,7 +30,7 @@ dependencies {
 	
 	modImplementation "com.terraformersmc:modmenu:7.1.0"
 
-	include(implementation("com.github.NepNep21:DiscordRPC4j16:v1.2.1"))
+	include(implementation("com.github.NepNep21:DiscordRPC4j16:1.2.2"))
 }
 
 processResources {

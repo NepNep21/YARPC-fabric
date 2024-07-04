@@ -29,6 +29,7 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -153,16 +154,7 @@ public class YARPC implements ClientModInitializer {
                         case "USERNAME" -> text = text.replaceFirst(placeholder, client.getSession().getUsername());
                         case "HEALTH" -> text = text.replaceFirst(placeholder, "Health " + (player != null ? player.getHealth() : "0.0"));
                         case "HUNGER" -> text = text.replaceFirst(placeholder, "Food " + (player != null ? player.getHungerManager().getFoodLevel() : "0"));
-                        case "SERVER" -> {
-                            ServerInfo server = client.getCurrentServerEntry();
-                            if (server != null) {
-                                text = text.replaceFirst(placeholder, server.address);
-                            } else if (client.isIntegratedServerRunning()) {
-                                text = text.replaceFirst(placeholder, "Singleplayer");
-                            } else {
-                                text = text.replaceFirst(placeholder, "Main Menu");
-                            }
-                        }
+                        case "SERVER" -> text = text.replaceFirst(placeholder, getServer(client, true));
                         case "HELD_ITEM" -> {
                             String item = "Air";
                             if (player != null) {
@@ -172,12 +164,24 @@ public class YARPC implements ClientModInitializer {
                             }
                             text = text.replaceFirst(placeholder, "Holding " + item);
                         }
+                        case "SERVER_NAME" -> text = text.replaceFirst(placeholder, getServer(client, false));
                     }
                 }
                 String[] split = text.split("\n");
                 builder.setText(split[0], split[1]);
             }
         });
+    }
+    
+    private static String getServer(MinecraftClient client, boolean address) {
+        ServerInfo server = client.getCurrentServerEntry();
+        if (server != null) {
+            return address ? server.address : server.name;
+        }
+        if (client.isIntegratedServerRunning()) {
+            return "Singleplayer";
+        }
+        return "Main Menu";
     }
     
     private void init(ConfigHolder<YARPCConfig> holder, Logger logger, DiscordRPCClient discordClient) {

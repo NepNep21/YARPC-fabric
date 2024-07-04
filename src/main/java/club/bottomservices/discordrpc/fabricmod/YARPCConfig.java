@@ -63,7 +63,15 @@ public class YARPCConfig implements ConfigData {
     }
     
     private static class NotSerialized {
-        private static final List<String> VALID_OPTIONS = List.of("DIMENSION", "USERNAME", "HEALTH", "HUNGER", "SERVER", "HELD_ITEM");
+        private static final List<String> VALID_OPTIONS = List.of(
+                "DIMENSION",
+                "USERNAME",
+                "HEALTH",
+                "HUNGER",
+                "SERVER", 
+                "HELD_ITEM",
+                "SERVER_NAME"
+        );
         private static final List<String> DEFAULT = List.of("USERNAME", "HEALTH", "HUNGER", "DIMENSION");
     }
 }
